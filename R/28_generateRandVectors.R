@@ -27,7 +27,7 @@
 # Package dependancies: 
 #
 # Changelog:
-#     2019.09.13. forked from other SEED projects
+#     2019.09.13. forked from other SEED lab projects
 #                   
 # Feature wishlist:  (*: planned but not complete)
 #     *              
