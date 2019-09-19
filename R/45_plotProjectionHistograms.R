@@ -30,7 +30,7 @@
 #     2019.09.19. forked from other SEED lab projects
 #                   
 # Feature wishlist:  (*: planned but not complete)
-#     *
+#     * figure out the error in showing the figure
 ## ===================================================== ##
 
 
