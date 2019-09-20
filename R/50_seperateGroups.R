@@ -158,56 +158,67 @@ if(grepl(x = filename, pattern = "\\.RData$"))
 
 
 
-## Extract length(sortedCandidateNames) candidate projections from original projection data (includs orig student ID) ####
-#loop through all of the candidate projections and add them to a new data frame 
-CandidateProjections <- data.frame(userID = probMatrix$userID)
-for(i in 1:length(sortedCandidateNames))
+## MAIN ------------------------------------
+
+## Extract length(sortedCandidateNames) candidate projections from original projection data (includes orig ID) ####
+# Check that there is at least one recommended random vector to use
+if(length(sortedCandidateNames) == 0)
 {
-  #add projection values to the data frame
-  CandidateProjections <- cbind(CandidateProjections, projection[sortedCandidateNames[i]])
-}
-
-
-## Seperate and save Group1 and Group2 based on threshold ####
-#identify how many of the cluster candidates to move forward with
-numRP1DgroupsToAnalyze <- 3   #max value could be "length(sortedCandidateNames)"
-
-#for each of the top cluster candidates, find and save the 2 groups' probability matricies
-for(i in 1:numRP1DgroupsToAnalyze)
+  #print error message####
+  message("-----Script ERROR. No useable random vectors were identified in prior step. Exiting.-----")
+  
+}else
 {
-  #find column name for current itteration
-  curColName <- sortedCandidateNames[i]
+  #loop through all of the candidate projections and add them to a new data frame 
+  CandidateProjections <- data.frame(userID = probMatrix$userID)
+  for(i in 1:length(sortedCandidateNames))
+  {
+    #add projection values to the data frame
+    CandidateProjections <- cbind(CandidateProjections, projection[sortedCandidateNames[i]])
+  }
   
-  #extract the RespondantIDs for each of the 2 groups
-  group1IDs <- data.frame(ID = CandidateProjections$userID[CandidateProjections[curColName] < 
-                                                                   minW_RandVec_sort[curColName, "Group Threshold"]])
-  group2IDs <- data.frame(ID = CandidateProjections$userID[CandidateProjections[curColName] >= 
-                                                                   minW_RandVec_sort[curColName, "Group Threshold"]])
   
-  #extract each groups' probability matrix
-  group1probMatrix <- merge(probMatrix, group1IDs, by.x="userID", by.y = "ID")
-  group2probMatrix <- merge(probMatrix, group2IDs, by.x="userID", by.y = "ID")
+  ## Seperate and save Group1 and Group2 based on threshold ####
+  #identify how many of the cluster candidates to move forward with
+  numnTARPgroupsToAnalyze <- min(3, length(sortedCandidateNames))   #max value could be "length(sortedCandidateNames)"
   
-  ##|Save grouped probability matricies to file ####
-  cat("\nSaving files")
-  #write to CSV files
-  write.csv(file = file.path("output", paste0("50_", curColName, 
-                                              "_group1probMatrix.csv")), 
-            x = group1probMatrix)  
-  write.csv(file = file.path("output", paste0("50_", curColName, 
-                                              "_group2probMatrix.csv")), 
-            x = group2probMatrix)  
-  #write to RData files
-  save(group1probMatrix, file = file.path("output", paste0("50_", curColName, 
-                                                           "_group1probMatrix.RData"),
-                                          fsep = "/"), 
-       precheck = TRUE, compress = TRUE)
-  save(group2probMatrix, file = file.path("output", paste0("50_", curColName, 
-                                                           "_group2probMatrix.RData"),
-                                          fsep = "/"), 
-       precheck = TRUE, compress = TRUE)
+  #for each of the top cluster candidates, find and save the 2 groups' probability matricies
+  for(i in 1:numnTARPgroupsToAnalyze)
+  {
+    #find column name for current itteration
+    curColName <- sortedCandidateNames[i]
+    
+    #extract the RespondantIDs for each of the 2 groups
+    group1IDs <- data.frame(ID = CandidateProjections$userID[CandidateProjections[curColName] < 
+                                                                     minW_RandVec_sort[curColName, "Group Threshold"]])
+    group2IDs <- data.frame(ID = CandidateProjections$userID[CandidateProjections[curColName] >= 
+                                                                     minW_RandVec_sort[curColName, "Group Threshold"]])
+    
+    #extract each groups' probability matrix
+    group1probMatrix <- merge(probMatrix, group1IDs, by.x="userID", by.y = "ID")
+    group2probMatrix <- merge(probMatrix, group2IDs, by.x="userID", by.y = "ID")
+    
+    ##|Save grouped probability matricies to file ####
+    cat("\nSaving files")
+    #write to CSV files
+    write.csv(file = file.path("output", paste0("50_", curColName, 
+                                                "_group1probMatrix.csv")), 
+              x = group1probMatrix)  
+    write.csv(file = file.path("output", paste0("50_", curColName, 
+                                                "_group2probMatrix.csv")), 
+              x = group2probMatrix)  
+    #write to RData files
+    save(group1probMatrix, file = file.path("output", paste0("50_", curColName, 
+                                                             "_group1probMatrix.RData"),
+                                            fsep = "/"), 
+         precheck = TRUE, compress = TRUE)
+    save(group2probMatrix, file = file.path("output", paste0("50_", curColName, 
+                                                             "_group2probMatrix.RData"),
+                                            fsep = "/"), 
+         precheck = TRUE, compress = TRUE)
+    
+  }
   
-}
-
-##Script complete message####
-message("-----Script complete-----")
+  ##Script complete message####
+  message("-----Script complete-----")
+}#end else
