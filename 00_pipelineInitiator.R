@@ -111,9 +111,9 @@ cat("*****Starting: 40_findBestThreshold.R*****\n\n")
 source(file.path(getwd(), "R", "40_findBestThreshold.R"))
 cat("*****Complete: 40_findBestThreshold.R*****\n\n")
 
-cat("*****Starting: 45_plotProjectionHistograms.R*****\n\n")
-source(file.path(getwd(), "R", "45_plotProjectionHistograms.R"))
-cat("*****Complete: 45_plotProjectionHistograms.R*****\n\n")
+# cat("*****Starting: 45_plotProjectionHistograms.R*****\n\n")
+# source(file.path(getwd(), "R", "45_plotProjectionHistograms.R"))
+# cat("*****Complete: 45_plotProjectionHistograms.R*****\n\n")
 
 cat("*****Starting: 50_seperateGroups.R*****\n\n")
 source(file.path(getwd(), "R", "50_seperateGroups.R"))
