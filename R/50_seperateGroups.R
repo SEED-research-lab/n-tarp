@@ -200,7 +200,7 @@ if(length(sortedCandidateNames) == 0)
     numnTARPgroupsToAnalyze <- min(3, length(sortedCandidateNames))   #max value could be "length(sortedCandidateNames)"
   }
   
-  #for each of the top cluster candidates, find and save the 2 groups' probability matricies
+  #for each of the top cluster candidates, find and save the 2 groups' ID lists and their probability matricies
   for(i in 1:numnTARPgroupsToAnalyze)
   {
     #find column name for current itteration
@@ -212,13 +212,33 @@ if(length(sortedCandidateNames) == 0)
     group2IDs <- data.frame(ID = CandidateProjections$userID[CandidateProjections[curColName] >= 
                                                                      minW_RandVec_sort[curColName, "Group Threshold"]])
     
+    
+    
     #extract each groups' probability matrix
     group1probMatrix <- merge(probMatrix, group1IDs, by.x="userID", by.y = "ID")
     group2probMatrix <- merge(probMatrix, group2IDs, by.x="userID", by.y = "ID")
     
+    
+    ##|Save group IDs to file ####
+    cat(paste("\n\nSaving cluster group ID files for", curColName))
+    #write to CSV files
+    write.csv(file = file.path("output", paste0("50_", curColName, 
+                                                "_group1IDs.csv")), 
+              x = group1IDs)  
+    write.csv(file = file.path("output", paste0("50_", curColName, 
+                                                "_group2IDs.csv")), 
+              x = group2IDs)  
+    #write to RData files
+    save(list = c("group1IDs", "group2IDs"), file = file.path("output", paste0("50_", curColName, 
+                                                             "_group_IDs.RData"),
+                                            fsep = "/"), 
+         precheck = TRUE, compress = TRUE)
+
+    
+    
 
     ##|Save grouped probability matricies to file ####
-    cat("\nSaving files")
+    cat(paste("\nSaving probability matrix files for", curColName))
     #write to CSV files
     write.csv(file = file.path("output", paste0("50_", curColName, 
                                                 "_group1probMatrix.csv")), 
@@ -227,14 +247,11 @@ if(length(sortedCandidateNames) == 0)
                                                 "_group2probMatrix.csv")), 
               x = group2probMatrix)  
     #write to RData files
-    save(group1probMatrix, file = file.path("output", paste0("50_", curColName, 
-                                                             "_group1probMatrix.RData"),
-                                            fsep = "/"), 
+    save(list = c("group1probMatrix" , "group2probMatrix"), 
+         file = file.path("output", paste0("50_", curColName, "_group_probMatrices.RData"),
+                          fsep = "/"), 
          precheck = TRUE, compress = TRUE)
-    save(group2probMatrix, file = file.path("output", paste0("50_", curColName, 
-                                                             "_group2probMatrix.RData"),
-                                            fsep = "/"), 
-         precheck = TRUE, compress = TRUE)
+
     
   }
   

@@ -29,9 +29,10 @@
 # Changelog:
 #       2017.09.20. extracted from 30_
 #       2019.09.13. forked from other SEED lab projects
+#       2020.02.06. fixing holdover bug from initial implementation (expected name for 1st column)
 #                   
 # Feature wishlist:  (*: planned but not complete)
-#     *              
+#     * make the first column name issue more robust (don't hard rename to userID; throw an error or something)
 ## ===================================================== ##
 
 CalcProjectionMatrix <- function(probMatrix, randomVectors, RV_nums){ 
@@ -41,6 +42,9 @@ CalcProjectionMatrix <- function(probMatrix, randomVectors, RV_nums){
   
   #find the number of dimensions for the projection
   numDims <- nrow(randomVectors)
+  
+  #make sure the first column is named appropriately
+  colnames(probMatrix)[1] <- "userID"
   
   ##Dot product of user vectors (in probMatrix) with random vector (in randomVectors) ####
   #create matrix containing only the probabilities (converted to matrix to do matrix multiplation below) 
@@ -62,7 +66,7 @@ CalcProjectionMatrix <- function(probMatrix, randomVectors, RV_nums){
   colnames(projection) <- projectionColNames
   
   #set row names to be the users' ID
-  rownames(projection) <- probMatrix$RespondentID
+  rownames(projection) <- probMatrix$userID
   
   # calculate dot products for all users with all random vectors
   for(i in 1:length(randomVectors))
