@@ -201,6 +201,7 @@ if(length(sortedCandidateNames) == 0)
   }
   
   #for each of the top cluster candidates, find and save the 2 groups' ID lists and their probability matricies
+  cluster_assignments <- c()
   for(i in 1:numnTARPgroupsToAnalyze)
   {
     #find column name for current itteration

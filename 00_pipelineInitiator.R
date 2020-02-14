@@ -118,16 +118,16 @@ cat("*****Complete: 40_findBestThreshold.R*****\n\n")
 cat("*****Starting: 50_seperateGroups.R*****\n\n")
 source(file.path(getwd(), "R", "50_seperateGroups.R"))
 cat("*****Complete: 50_seperateGroups.R*****\n\n")
-
-cat("*****Starting: 53_populateSummaryTable.R*****\n\n")
-source(file.path(getwd(), "R", "53_populateSummaryTable.R"))
-cat("*****Complete: 53_populateSummaryTable.R*****\n\n")
-
-cat("*****Starting: 55_buildNormalizedResultsTable.R*****\n\n")
-source(file.path(getwd(), "R", "55_buildNormalizedResultsTable.R"))
-cat("*****Complete: 55_buildNormalizedResultsTable.R*****\n\n")
-
-message("\n**** Summary chart created! ****\n")
+# 
+# cat("*****Starting: 53_populateSummaryTable.R*****\n\n")
+# source(file.path(getwd(), "R", "53_populateSummaryTable.R"))
+# cat("*****Complete: 53_populateSummaryTable.R*****\n\n")
+# 
+# cat("*****Starting: 55_buildNormalizedResultsTable.R*****\n\n")
+# source(file.path(getwd(), "R", "55_buildNormalizedResultsTable.R"))
+# cat("*****Complete: 55_buildNormalizedResultsTable.R*****\n\n")
+# 
+# message("\n**** Summary chart created! ****\n")
 
 
 # 
