@@ -54,11 +54,19 @@ WorkingDirectoryCheck <- function(expectedFile) {
     #if file does exists in the current WD, exit the funtion returning TRUE
     return(TRUE)
   } else{
-    #if the file does not exist in the current WD, return FALSE
-    return(FALSE)
+    #check for likely locations, set wd automatically if found and return TRUE
+    if(file.exists(file.path(getwd(), "output", expectedFile))){
+      setwd(file.path(getwd(), "analytics"))
+      return(TRUE)
+    } else if(file.exists(file.path(dirname(getwd()), expectedFile))){
+      setwd(dirname(getwd()))   #set wd to parent directory of current wd
+      return(TRUE)
+    } else{
+      #return FALSE if the file does not exist in the current WD (or other obvious locations)
+      return(FALSE)
+    }
   }
 }
-
 
 ######### Setup ########## 
 
@@ -80,11 +88,238 @@ if(!WorkingDirectoryCheck(expectedFile)){
 
 
 ## _External function sourcing ########## 
-#(none_))######### Main ########## 
+#(none_))
+
+
+########## Main ########## 
 
 #start a timer to track how long the pipeline takes to execute
 start <-  proc.time() #save the time (to report the pipeline's running time at the end of the script)
 save("start", file = file.path("output", "00_pipelineStartTime.RData"))
+
+
+
+
+
+
+## Check for pre-defined starting directory and course prefix ####
+if(!exists("filenamePrefix")) filenamePrefix <- NULL
+if(!exists("dataFolderPath")) dataFolderPath <- file.path(getwd(),"output","")
+if(!exists("filenameFV")) filenameFV <- NULL
+
+
+## get data file locations from user ####
+#Locate the CLEAN probability matrix (feature vector) file
+prompt <- "*****Select the CLEAN PROBABILITY MATRIX (feature vector) file*****\n    (The file picker window may have opened in the background.  Check behind this window if you do not see it.)\n"
+cat("\n", prompt)
+filenameFV <- tcltk::tk_choose.files(caption = prompt,
+                                   default = file.path(getwd(),
+                                                       "output",
+                                                       ""),
+                                   filter = matrix(c("CSV", ".csv",
+                                                     "RData", ".RData",
+                                                     "All files", ".*"),
+                                                   3, 2, byrow = TRUE),
+                                   multi = FALSE)
+
+
+
+#
+# SelectFile(prompt = "*****Select the CLEAN PROBABILITY MATRIX (feature vector) file*****\n    (The file picker window may have opened in the background.  Check behind this window if you do not see it.)\n",
+#            defaultFilename = "110v2_stuFeatureVector-CC_ID_grouping-CO01.RData",
+#            # filenamePrefix = ifelse(exists("filenamePrefix") & !is.null(filenamePrefix),
+#            #                         yes = filenamePrefix, no = ""),
+#            fileTypeMatrix = matrix(c("RData", ".RData", "CSV", ".csv", "All files", ".*"),
+#                                    3, 2, byrow = TRUE),
+#            dataFolderPath = ifelse(exists("dataFolderPath") & !is.null(dataFolderPath),
+#                                    yes = dataFolderPath, no = ""))
+#
+# #load in the data based on the type of data file provided
+# if(grepl(x = filename, pattern = "\\.RData$"))
+# {
+#   load(file = filename)
+# }else if(grepl(x = filename, pattern = "\\.(csv|CSV)$"))
+# {
+#   probMatrix <- read_csv(file = filename)
+# }else
+# {
+#   message("Invalid Data Filetype.")
+#   break
+# }
+
+# ............................temp reference code.................................................
+
+# 
+# #get JSON
+# #Locate the JSON course structure data file to process (with sanitized user input)
+# filenameJSON <- 
+#   SelectFile(prompt = "*****Select the JSON COURSE STRUCTURE file.*****  (It should end with 'course_structure-prod-analytics.json')", 
+#              defaultFilename = "course_structure-prod-analytics.json", 
+#              filenamePrefix = ifelse(exists("filenamePrefix") & !is.null(filenamePrefix), 
+#                                      yes = filenamePrefix, no = ""), 
+#              fileTypeMatrix = matrix(c("JSON", ".json"), 1, 2, byrow = TRUE),
+#              dataFolderPath = ifelse(exists("dataFolderPath") & !is.null(dataFolderPath), 
+#                                      yes = dataFolderPath, no = ""))
+# 
+# 
+# #extract course prefix; extract the folder path
+# filenamePrefix <- str_extract(string = basename(filenameJSON), 
+#                               pattern = ".*(?=course_structure-prod-analytics.json$)")
+# courseName <- str_extract(string = filenamePrefix, 
+#                           pattern = "^[^-]*-[^-]*(?=-)")
+# dataFolderPath <- dirname(filenameJSON)
+# 
+# 
+# #try to automatically get the other files (ask for them if fails)
+# #Locate the clickstream data file to process (with sanitized user input)
+# filename_moduleAccess <- 
+#   SelectFile(prompt = "*****Select the SQL CLICKSTREAM data file.*****  (It should end with 'courseware_studentmodule-prod-analytics.sql')", 
+#              defaultFilename = "courseware_studentmodule-prod-analytics.sql",
+#              filenamePrefix = ifelse(exists("filenamePrefix") & !is.null(filenamePrefix), 
+#                                      yes = filenamePrefix, no = ""), 
+#              fileTypeMatrix = matrix(c("SQL", ".sql"), 1, 2, byrow = TRUE),
+#              dataFolderPath = ifelse(exists("dataFolderPath") & !is.null(dataFolderPath), 
+#                                      yes = dataFolderPath, no = ""))
+# 
+# 
+# #Locate the USER PROFILE data file to process (with sanatized user input)
+# filenameUserProfile <- 
+#   SelectFile(prompt = "*****Select the SQL USER PROFILE data file.*****  (It should end with 'auth_userprofile-prod-analytics.sql')", 
+#              defaultFilename = "auth_userprofile-prod-analytics.sql",
+#              filenamePrefix = ifelse(exists("filenamePrefix") & !is.null(filenamePrefix), 
+#                                      yes = filenamePrefix, no = ""), 
+#              fileTypeMatrix = matrix(c("SQL", ".sql"), 1, 2, byrow = TRUE),
+#              dataFolderPath = ifelse(exists("dataFolderPath") & !is.null(dataFolderPath), 
+#                                      yes = dataFolderPath, no = ""))
+# 
+# 
+# 
+# #import data files ####
+# data_courseStructure <- jsonlite::fromJSON(filenameJSON)
+# data_moduleAccess <- readr::read_tsv(filename_moduleAccess)
+# dataUserProfile <- 
+#   data.table::fread(filenameUserProfile, 
+#                     select = c("id", "user_id", "gender",
+#                                "year_of_birth", "level_of_education", "country"),
+#                     quote = "")
+# 
+# 
+# DirCheckCreate(subDir = courseName)
+# 
+# 
+# #ask user if they want to pre-specify the clustering technique and number of clusters
+# repeat{
+#   beepr::beep(sound = 10)   #notify user to provide input
+#   pre_specify <- readline(prompt="Would you like to PRE-SPECIFY the clustering technique, population, and number of clusters? (Y/N): 
+#                           (CAUTION: not recommended if ideal number of clusters for data is not yet known)");
+#   
+#   if(pre_specify == "y" || pre_specify == "Y"){  
+#     pre_specify <- TRUE
+#     
+#     ######### User providing dataset details #####
+#     beepr::beep(sound = 10)   #notify user to provide input
+#     cat("\nEnter a description of this datasest (to be included on graphs).
+#     (suggested format: [Data source, e.g., edX], [Course number, e.g., nano515x], [Data date, e.g., Data from 2016.11.18])")
+#     dataSetDescription <- readline(prompt="Description: ");
+#     
+#     
+#     
+#     ## get clustering technique
+#     repeat{
+#       clusterTypeSelection <- readline(prompt="\nEnter '1' or {nothing} for K-means clustering, 
+#       '2' for c-means (fuzzy) clustering: ");
+#       
+#       #exit loop and continue script if input valid
+#       if(clusterTypeSelection == 1  | 
+#          clusterTypeSelection == "" |   
+#          clusterTypeSelection == 2  ){
+#         break
+#       }
+#       beepr::beep(sound = 10)   #notify user to provide input
+#     }   #repeat if none of the conditions were met (i.e., user input was invalid)
+#     
+#     
+#     ##Get user input for number of clusters
+#     repeat{
+#       K <- readline("\nEnter the desired number of clusters (maximum 10): ");
+#       K <- as.integer(K);
+#       
+#       ifelse(!is.na(K) & (K > 0) & (K <= 10), 
+#              yes = break, 
+#              no = print("Please enter a valid number.", quote=FALSE))
+#     }
+#     
+#     
+#     
+#     ## get population
+#     repeat{
+#       userSubsetSelection <- readline(prompt="\n Who to cluster?: 
+# Enter '1' or {nothing} for all learners,  
+#       '2' or 'f' for female learners,
+#       '3' or 'm' for male learners,
+#       '4' live learners,
+#       '5' late learners,
+#       '6' archive learners,
+#       '7' or 'c' custom ID list");
+#       
+#       
+#       # set if the user subgroups should be calculated based on selection
+#       if(userSubsetSelection == 4 | 
+#          userSubsetSelection == 5 |
+#          userSubsetSelection == 6){
+#         inputLLA <- '1' #set to find live, late, and archive groups,  
+#         
+#       }else{
+#         inputLLA <- '2' #don't find live, late, and archive groups,  
+#       }
+#       
+#       #exit loop and continue script if input valid
+#       if(userSubsetSelection == 1 | userSubsetSelection == "" |
+#          userSubsetSelection == 2 | userSubsetSelection == 'f' | userSubsetSelection == 'F' |
+#          userSubsetSelection == 3 | userSubsetSelection == 'm' | userSubsetSelection == 'M' |
+#          userSubsetSelection == 4 | 
+#          userSubsetSelection == 5 |
+#          userSubsetSelection == 6 | 
+#          userSubsetSelection == 7 | userSubsetSelection == 'c'){
+#         break
+#       }
+#       beepr::beep(sound = 10)   #notify user to provide input
+#     }   #repeat if none of the conditions were met (i.e., user input was invalid)
+#     
+#     #save selections to file to be recalled in 3_Clustering.R
+#     save(list = c("dataSetDescription", "clusterTypeSelection", "K", "userSubsetSelection", "inputLLA"), 
+#          file = "initiator_userPreselectionValues.RData")
+#     
+#     break
+#     
+#   }else if(pre_specify == "n" || pre_specify == "N"){  
+#     pre_specify <- FALSE
+#     
+#     dataSetDescription   <- NULL
+#     clusterTypeSelection <- NULL
+#     K                    <- NULL
+#     userSubsetSelection  <- NULL
+#     inputLLA             <- NULL
+#     
+#     save(list = c("dataSetDescription", "clusterTypeSelection", "K", "userSubsetSelection", "inputLLA"), 
+#          file = "initiator_userPreselectionValues.RData")
+#     
+#     break
+#   }
+#   else{
+#     message("Please enter either 'Y' or 'N'.\n")
+#   }
+#   
+# } # repeat if invalid input provided
+
+
+
+
+# ....................end temp reference code.................................
+
+
+
+
 
 ##source (run) the pipeline script files in sequence
 # cat("*****Starting: 05_processCourseQuestions.R*****\n\n")

@@ -35,7 +35,8 @@
 
 
 ## Clean the environment ########## 
-rm(list=ls())  
+varsToRetain <- c("filenameFV", "dataFolderPath")
+rm(list=setdiff(ls(), varsToRetain))
 
 ## Required libraries ########## 
 require("readr")
@@ -47,32 +48,73 @@ require("tibble")
 #custom function(s)
 source(file.path(getwd(), "R", "functions", "ExtractRVnumsAndNames.R"))
 source(file.path(getwd(), "R", "functions", "DisplayPercentComplete.R"))
+source(file.path(getwd(), "R", "functions", "file-structure-functions.R"))
 
-## Read data from file(s) ####
+# ## Read data from file(s) ####
+# #read the PROJECTIONS data file
+# prompt <- "*****Select the PROJECTIONS data file*****\n    (The file picker window may have opened in the background.  Check behind this window if you do not see it.)\n"
+# cat("\n", prompt, "\n\n")
+# filename <- tcltk::tk_choose.files(caption = prompt,
+#                                    default = file.path(getwd(),
+#                                                        "output",
+#                                                        "30_projections.RData"),
+#                                    filter = matrix(c("RData", ".RData",
+#                                                      "CSV", ".csv",
+#                                                      "All files", ".*"),
+#                                                    3, 2, byrow = TRUE),
+#                                    multi = FALSE)
+# #load in the data based on the type of data file provided
+# if(grepl(x = filename, pattern = "\\.RData$"))
+# {
+#   load(file = filename)
+# }else if(grepl(x = filename, pattern = "\\.(csv|CSV)$"))
+# {
+#   projections <- read_csv(file = filename)
+# }else
+# {
+#   message("Invalid Data Filetype.")
+#   return
+# }
+
+
+
+
+#Read data from files ####
+## Check for pre-defined starting directory and course prefix ####
+if(!exists("filenamePrefix")) filenamePrefix <- NULL
+if(!exists("dataFolderPath")) dataFolderPath <- NULL
+if(!exists("filenameFV")) filenameFV <- NULL
+
+
+## get data file locations from user ####
+
+
+# #try to automatically get the other files (ask for them if fails)
 #read the PROJECTIONS data file
-prompt <- "*****Select the PROJECTIONS data file*****\n    (The file picker window may have opened in the background.  Check behind this window if you do not see it.)\n"
-cat("\n", prompt, "\n\n")
-filename <- tcltk::tk_choose.files(caption = prompt,
-                                   default = file.path(getwd(),
-                                                       "output",
-                                                       "30_projections.RData"),
-                                   filter = matrix(c("RData", ".RData",
-                                                     "CSV", ".csv",
-                                                     "All files", ".*"),
-                                                   3, 2, byrow = TRUE),
-                                   multi = FALSE)
+filenameProj <-
+  SelectFile(prompt = "*****Select the PROJECTIONS data file*****\n    (The file picker window may have opened in the background.  Check behind this window if you do not see it.)\n",
+             defaultFilename = "30_projections.RData",
+             # filenamePrefix = ifelse(exists("filenamePrefix") & !is.null(filenamePrefix),
+             #                         yes = filenamePrefix, no = ""),
+             fileTypeMatrix = matrix(c("RData", ".RData", "CSV", ".csv", "All files", ".*"),
+                                     3, 2, byrow = TRUE),
+             dataFolderPath = ifelse(exists("dataFolderPath") & !is.null(dataFolderPath),
+                                     yes = dataFolderPath, no = ""))
+
+
 #load in the data based on the type of data file provided
-if(grepl(x = filename, pattern = "\\.RData$"))
-{
-  load(file = filename)
-}else if(grepl(x = filename, pattern = "\\.(csv|CSV)$"))
-{
+if(grepl(x = filenameProj, pattern = "\\.RData$")){
+  load(file = filenameProj)
+}else if(grepl(x = filenameProj, pattern = "\\.(csv|CSV)$")){
   projections <- read_csv(file = filename)
-}else
-{
+}else{
   message("Invalid Data Filetype.")
-  return
+  break
 }
+
+
+
+
 
 
 #get the string values for the random vectors 

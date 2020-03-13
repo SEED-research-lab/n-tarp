@@ -35,7 +35,8 @@
 
 
 ## Clean the environment ########## 
-rm(list=ls())  
+varsToRetain <- c("filenameFV")
+rm(list=setdiff(ls(), varsToRetain))
 
 
 ## Required libraries ########## 
