@@ -30,12 +30,15 @@
 #     2019.09.19. forked from other SEED lab projects
 #                   
 # Feature wishlist:  (*: planned but not complete)
-#     *
+#     *need a robust way to select what object in the loaded PROJECTIONS file is 
+#       the one that should be renamed as probMatrix
 ## ===================================================== ##
 
 
 ## Clean the environment ########## 
-rm(list=ls())  
+varsToRetain <- c("filenameFV", "dataFolderPath")
+rm(list=setdiff(ls(), varsToRetain))
+
 
 
 ## Required libraries ########## 
@@ -46,115 +49,120 @@ require("dplyr")
 require("tibble")
 
 
+#custom function(s)
+source(file.path(getwd(), "R", "functions", "DisplayPercentComplete.R"))
+source(file.path(getwd(), "R", "functions", "file-structure-functions.R"))
 
-## Read data from file(s) ####
-#read the CLEAN probability matrix CSV file
-prompt <- "*****Select the CLEAN PROBABILITY MATRIX CSV file*****\n    (The file picker window may have opened in the background.  Check behind this window if you do not see it.)\n"
-cat("\n", prompt)
-filename <- tcltk::tk_choose.files(caption = prompt,
-                                   default = file.path(getwd(),
-                                                       "output",
-                                                       "10_passForwardData_CPM.RData"),
-                                   filter = matrix(c("RData", ".RData",
-                                                     "CSV", ".csv",
-                                                     "All files", ".*"),
-                                                   3, 2, byrow = TRUE),
-                                   multi = FALSE)
+
+
+#Read data from files ####
+## Check for pre-defined starting directory and course prefix ####
+if(!exists("filenamePrefix")) filenamePrefix <- NULL
+if(!exists("dataFolderPath")) dataFolderPath <- NULL
+if(!exists("filenameFV")) filenameFV <- NULL
+
+
+## get data file locations from user ####
+#Locate the CLEAN probability matrix (feature vector) file
+if(!exists("filenameFV")){
+  #read the CLEAN probability matrix (feature vector) file
+  prompt <- "*****Select the CLEAN PROBABILITY MATRIX (feature vector) file*****\n    (The file picker window may have opened in the background.  Check behind this window if you do not see it.)\n"
+  cat("\n", prompt)
+  filenameFV <- tcltk::tk_choose.files(caption = prompt,
+                                       default = file.path(getwd(), "output", ""),
+                                       filter = matrix(c("CSV", ".csv",
+                                                         "RData", ".RData",
+                                                         "All files", ".*"),
+                                                       3, 2, byrow = TRUE),
+                                       multi = FALSE)
+}
+
 #load in the data based on the type of data file provided
-if(grepl(x = filename, pattern = "\\.RData$"))
-{
-  load(file = filename)
-}else if(grepl(x = filename, pattern = "\\.(csv|CSV)$"))
-{
-  probMatrix <- read_csv(file = filename)
-}else
-{
+if(grepl(x = filenameFV, pattern = "\\.RData$")){
+  load(file = filenameFV)
+  probMatrix <- stu_LO_FV
+}else if(grepl(x = filenameFV, pattern = "\\.(csv|CSV)$")){
+  probMatrix <- read_csv(file = filenameFV)
+}else {
   message("Invalid Data Filetype.")
   break
 }
-# filename <- file.path(getwd(),"output","10_passForwardData_CPM.RData")
-# load(file = filename)
+
+
+
+
 
 #read the MIN_W and THRESHOLD data file
-prompt <- "*****Select the MIN_W and THRESHOLD data file*****\n    (The file picker window may have opened in the background.  Check behind this window if you do not see it.)\n"
-cat("\n", prompt, "\n\n")
-filename <- tcltk::tk_choose.files(caption = prompt,
-                                   default = file.path(getwd(),
-                                                       "output",
-                                                       "40_minW_and_threshold.RData"),
-                                   filter = matrix(c("RData", ".RData",
-                                                     "CSV", ".csv",
-                                                     "All files", ".*"),
-                                                   3, 2, byrow = TRUE),
-                                   multi = FALSE)
+filenameMinW <-
+  SelectFile(prompt = "*****Select the MIN_W and THRESHOLD data file*****\n    (The file picker window may have opened in the background.  Check behind this window if you do not see it.)\n",
+             defaultFilename = "40_minW_and_threshold.RData",
+             # filenamePrefix = ifelse(exists("filenamePrefix") & !is.null(filenamePrefix),
+             #                         yes = filenamePrefix, no = ""),
+             fileTypeMatrix = matrix(c("RData", ".RData", "CSV", ".csv", "All files", ".*"),
+                                     3, 2, byrow = TRUE),
+             dataFolderPath = ifelse(exists("dataFolderPath") & !is.null(dataFolderPath),
+                                     yes = dataFolderPath, no = ""))
+
+
 #load in the data based on the type of data file provided
-if(grepl(x = filename, pattern = "\\.RData$"))
-{
-  load(file = filename)
-}else if(grepl(x = filename, pattern = "\\.(csv|CSV)$"))
-{
-  minW_RandVec_sort <- read_csv(file = filename)
-}else
-{
+if(grepl(x = filenameMinW, pattern = "\\.RData$")){
+  load(file = filenameMinW)
+}else if(grepl(x = filenameMinW, pattern = "\\.(csv|CSV)$")){
+  minW_RandVec_sort <- read_csv(file = filenameMinW)
+}else{
   message("Invalid Data Filetype.")
   return
 }
-# filename <-  file.path(getwd(),"output","40_minW_and_threshold.RData")
-# load(file = filename)
+
+
 
 #read the BEST RANDOM PROJECTIONS data file
-prompt <- "*****Select the BEST RANDOM PROJECTIONS data file*****\n    (The file picker window may have opened in the background.  Check behind this window if you do not see it.)\n"
-cat("\n", prompt, "\n\n")
-filename <- tcltk::tk_choose.files(caption = prompt,
-                                   default = file.path(getwd(),
-                                                       "output",
-                                                       "40_best_RP_names.RData"),
-                                   filter = matrix(c("RData", ".RData",
-                                                     "CSV", ".csv",
-                                                     "All files", ".*"),
-                                                   3, 2, byrow = TRUE),
-                                   multi = FALSE)
+filenameBestRP <-
+  SelectFile(prompt = "*****Select the BEST RANDOM PROJECTIONS data file*****\n    (The file picker window may have opened in the background.  Check behind this window if you do not see it.)\n",
+             defaultFilename = "40_best_RP_names.RData",
+             # filenamePrefix = ifelse(exists("filenamePrefix") & !is.null(filenamePrefix),
+             #                         yes = filenamePrefix, no = ""),
+             fileTypeMatrix = matrix(c("RData", ".RData", "CSV", ".csv", "All files", ".*"),
+                                     3, 2, byrow = TRUE),
+             dataFolderPath = ifelse(exists("dataFolderPath") & !is.null(dataFolderPath),
+                                     yes = dataFolderPath, no = ""))
+
+
 #load in the data based on the type of data file provided
-if(grepl(x = filename, pattern = "\\.RData$"))
-{
-  load(file = filename)
-}else if(grepl(x = filename, pattern = "\\.(csv|CSV)$"))
-{
-  sortedCandidateNames <- read_csv(file = filename)
-}else
-{
+if(grepl(x = filenameBestRP, pattern = "\\.RData$")){
+  load(file = filenameBestRP)
+}else if(grepl(x = filenameBestRP, pattern = "\\.(csv|CSV)$")){
+  sortedCandidateNames <- read_csv(file = filenameBestRP)
+}else{
   message("Invalid Data Filetype.")
   return
 }
-# filename <- file.path(getwd(),"output","40_best_RP_names.RData")
-# load(file = filename)
+
+
+
 
 #read the PROJECTIONS data file
-prompt <- "*****Select the PROJECTIONS data file*****\n    (The file picker window may have opened in the background.  Check behind this window if you do not see it.)\n"
-cat("\n", prompt, "\n\n")
-filename <- tcltk::tk_choose.files(caption = prompt,
-                                   default = file.path(getwd(),
-                                                       "output",
-                                                       "30_projections.RData"),
-                                   filter = matrix(c("RData", ".RData",
-                                                     "CSV", ".csv",
-                                                     "All files", ".*"),
-                                                   3, 2, byrow = TRUE),
-                                   multi = FALSE)
+filenameProj <-
+  SelectFile(prompt = "*****Select the PROJECTIONS data file*****\n    (The file picker window may have opened in the background.  Check behind this window if you do not see it.)\n",
+             defaultFilename = "30_projections.RData",
+             # filenamePrefix = ifelse(exists("filenamePrefix") & !is.null(filenamePrefix),
+             #                         yes = filenamePrefix, no = ""),
+             fileTypeMatrix = matrix(c("RData", ".RData", "CSV", ".csv", "All files", ".*"),
+                                     3, 2, byrow = TRUE),
+             dataFolderPath = ifelse(exists("dataFolderPath") & !is.null(dataFolderPath),
+                                     yes = dataFolderPath, no = ""))
+
+
 #load in the data based on the type of data file provided
-if(grepl(x = filename, pattern = "\\.RData$"))
-{
-  load(file = filename)
-}else if(grepl(x = filename, pattern = "\\.(csv|CSV)$"))
-{
+if(grepl(x = filenameProj, pattern = "\\.RData$")){
+  load(file = filenameProj)
+}else if(grepl(x = filenameProj, pattern = "\\.(csv|CSV)$")){
   projections <- read_csv(file = filename)
-}else
-{
+}else{
   message("Invalid Data Filetype.")
-  return
+  break
 }
-# filename <- file.path(getwd(),"output","30_projections.RData")
-# load(file = filename)
+
 
 
 
@@ -180,9 +188,23 @@ if(length(sortedCandidateNames) == 0)
   
   ## Seperate and save Group1 and Group2 based on threshold ####
   #identify how many of the cluster candidates to move forward with
-  numnTARPgroupsToAnalyze <- min(3, length(sortedCandidateNames))   #max value could be "length(sortedCandidateNames)"
+  if(interactive()){
+    numnTARPgroupsToAnalyze <- readline(prompt=paste0(
+      "How many n-TARP cluster criteria to use in clustering? 
+      (dafault = 10; max = ", length(sortedCandidateNames), "): "))
+    
+    #convert input to number (function returns NA for non-number inputs)
+    numnTARPgroupsToAnalyze <- as.numeric(numnTARPgroupsToAnalyze)    
+    
+    #if no or invalid value entered then set to default
+    numnTARPgroupsToAnalyze <- ifelse(is.na(numnTARPgroupsToAnalyze), yes = 10, no = numnTARPgroupsToAnalyze) 
+    
+  }else{
+    numnTARPgroupsToAnalyze <- min(3, length(sortedCandidateNames))   #max value could be "length(sortedCandidateNames)"
+  }
   
-  #for each of the top cluster candidates, find and save the 2 groups' probability matricies
+  #for each of the top cluster candidates, find and save the 2 groups' ID lists and their probability matricies
+  cluster_assignments <- c()
   for(i in 1:numnTARPgroupsToAnalyze)
   {
     #find column name for current itteration
@@ -194,12 +216,33 @@ if(length(sortedCandidateNames) == 0)
     group2IDs <- data.frame(ID = CandidateProjections$userID[CandidateProjections[curColName] >= 
                                                                      minW_RandVec_sort[curColName, "Group Threshold"]])
     
+    
+    
     #extract each groups' probability matrix
     group1probMatrix <- merge(probMatrix, group1IDs, by.x="userID", by.y = "ID")
     group2probMatrix <- merge(probMatrix, group2IDs, by.x="userID", by.y = "ID")
     
+    
+    ##|Save group IDs to file ####
+    cat(paste("\n\nSaving cluster group ID files for", curColName))
+    #write to CSV files
+    write.csv(file = file.path("output", paste0("50_", curColName, 
+                                                "_group1IDs.csv")), 
+              x = group1IDs)  
+    write.csv(file = file.path("output", paste0("50_", curColName, 
+                                                "_group2IDs.csv")), 
+              x = group2IDs)  
+    #write to RData files
+    save(list = c("group1IDs", "group2IDs"), file = file.path("output", paste0("50_", curColName, 
+                                                             "_group_IDs.RData"),
+                                            fsep = "/"), 
+         precheck = TRUE, compress = TRUE)
+
+    
+    
+
     ##|Save grouped probability matricies to file ####
-    cat("\nSaving files")
+    cat(paste("\nSaving probability matrix files for", curColName))
     #write to CSV files
     write.csv(file = file.path("output", paste0("50_", curColName, 
                                                 "_group1probMatrix.csv")), 
@@ -208,14 +251,11 @@ if(length(sortedCandidateNames) == 0)
                                                 "_group2probMatrix.csv")), 
               x = group2probMatrix)  
     #write to RData files
-    save(group1probMatrix, file = file.path("output", paste0("50_", curColName, 
-                                                             "_group1probMatrix.RData"),
-                                            fsep = "/"), 
+    save(list = c("group1probMatrix" , "group2probMatrix"), 
+         file = file.path("output", paste0("50_", curColName, "_group_probMatrices.RData"),
+                          fsep = "/"), 
          precheck = TRUE, compress = TRUE)
-    save(group2probMatrix, file = file.path("output", paste0("50_", curColName, 
-                                                             "_group2probMatrix.RData"),
-                                            fsep = "/"), 
-         precheck = TRUE, compress = TRUE)
+
     
   }
   
