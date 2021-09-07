@@ -138,7 +138,8 @@ repeat{
   beepr::beep(sound = 10)   #notify user to provide input
   histogramSet <- readline(prompt=paste0("Which set of histograms would you like to generate?
                                      (1) All ", ncol(projection), " projections or
-                                     (2) only the ", length(sortedCandidateNames)," projections that cluster?: "))
+                                     (2) only the ", length(sortedCandidateNames)," projections that cluster or
+                                     (3) a custom number of top projections: "))
   
   #set the names of the projections to plot based on user selection
   #if user selected ALL projections
@@ -151,8 +152,14 @@ repeat{
     histogramSetNames <- sortedCandidateNames
     break
     
+    #if the user selected CUSTOM number of projections
+  }else if(histogramSet == "3" || histogramSet == "(3)"){ 
+    histogramNum <- as.numeric(readline(prompt=paste0("How many histograms would you like to generate?: ")))
+    histogramSetNames <- rownames(minW_RandVec_sort[1:histogramNum, ])
+    break
+    
   }else{
-    message("Please enter either '1' or '2'.\n")
+    message("Please enter either '1' '2' or '3'.\n")
   }
   
   #repeat *OR* end if user requested
@@ -181,7 +188,7 @@ for(i in 1:length(histogramSetNames))
   #   "aes(fill=..count..)" will color each bar a shade of blue according to its count
   #   "guides(fill=FALSE)" turns off the legend
   ggHist <- ggHist + geom_histogram(binwidth = binWidth, aes(fill=..count..)) +
-    guides(fill=FALSE)
+    guides(fill="none")
   
   #set x-axis values, adjust to match bin boundaries 
   ggHist <- ggHist + scale_x_continuous(breaks = seq(from = binWidth/2, to = 3, by = binWidth)) 
@@ -206,7 +213,7 @@ for(i in 1:length(histogramSetNames))
   #| print completion progress to console   ####
   #   if more than 10 histograms will be created
   if (length(histogramSetNames) > 10) {
-    #durring first iteration, create progress status variables for main processing loop
+    #during first iteration, create progress status variables for main processing loop
     if(i==1)
     {
       iCount <- 0 #loop counter for completion updates

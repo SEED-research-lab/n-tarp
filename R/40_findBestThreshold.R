@@ -138,7 +138,7 @@ if(fileExistCheck != FALSE){
   #get the string values for the random vectors 
   numsAndNames <- ExtractRVnumsAndNames(RP_names = names(projection))
   
-  #split the returned list into two seperate variables.  Convert to matricies for use in the next step
+  #split the returned list into two separate variables.  Convert to matrices for use in the next step
   RV_nums <- as.matrix(numsAndNames$nums)
   RV_names <- as.matrix(numsAndNames$names)
   
@@ -159,7 +159,7 @@ if(fileExistCheck != FALSE){
 }else{
   #duplicate the projection data frame to store results of sorted projections
   projectionSort <- projection
-  #replace the row names with an assending integer 
+  #replace the row names with an ascending integer 
   #   (after sorting, the rows will no longer refer to a single user's projection)
   rownames(projectionSort) <- c(1:nrow(projectionSort))
   
@@ -170,7 +170,7 @@ if(fileExistCheck != FALSE){
     
     
     #| print completion progress to console   ####
-    #durring first iteration, create progress status variables for main processing loop
+    #during first iteration, create progress status variables for main processing loop
     if(i==1){
       iCount <- 0 #loop counter for completion updates
       pct <- 0  #percentage complete tracker
@@ -302,10 +302,10 @@ minW_RandVec_sort <- minW_RandVec_sort[order(minW_RandVec_sort$`Min WithinSS (W)
 cat("\nSaving CSV file.")
 proc.time() - start40
 
-write.csv(file = file.path("output", "40_minW_and_threshold.csv"), 
+write.csv(file = file.path("output", "40_minW_and_threshold_sorted.csv"), 
           x = minW_RandVec_sort)  
 #write to a RData file
-save(minW_RandVec_sort, file = file.path("output", "40_minW_and_threshold.RData"),
+save(minW_RandVec_sort, file = file.path("output", "40_minW_and_threshold_sorted.RData"),
      precheck = TRUE, compress = TRUE)
 
 
@@ -328,9 +328,12 @@ sortedCandidateNames <- names(sortedCandidates)
 ##|Save data to file ####
 #write to a CSV file
 cat("\nSaving files.")
-write.csv(file = file.path("output", "40_best_RP_names.csv"), 
+write.csv(file = file.path("output", 
+                           paste0("40_best_RP_names (W-lt-", clusterWThreshold, ").csv")), 
           x = sortedCandidateNames)  
 #write to a RData file
-save(sortedCandidateNames, file = file.path("output", "40_best_RP_names.RData"),
+save(sortedCandidateNames, 
+     file = file.path("output", 
+                      paste0("40_best_RP_names (W-lt-", clusterWThreshold, ").RData")),
      precheck = TRUE, compress = TRUE)
 
