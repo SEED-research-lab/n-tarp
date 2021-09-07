@@ -50,6 +50,11 @@ source(file.path(getwd(), "R", "functions", "ExtractRVnumsAndNames.R"))
 source(file.path(getwd(), "R", "functions", "DisplayPercentComplete.R"))
 source(file.path(getwd(), "R", "functions", "file-structure-functions.R"))
 
+
+#start a timer to track how long the script takes to execute
+start40 <-  proc.time() #save the time 
+
+
 # ## Read data from file(s) ####
 # #read the PROJECTIONS data file
 # prompt <- "*****Select the PROJECTIONS data file*****\n    (The file picker window may have opened in the background.  Check behind this window if you do not see it.)\n"
@@ -80,6 +85,9 @@ source(file.path(getwd(), "R", "functions", "file-structure-functions.R"))
 
 
 #Read data from files ####
+cat("Loading data from files\n")
+proc.time() - start40
+
 ## Check for pre-defined starting directory and course prefix ####
 if(!exists("filenamePrefix")) filenamePrefix <- NULL
 if(!exists("dataFolderPath")) dataFolderPath <- NULL
@@ -112,35 +120,81 @@ if(grepl(x = filenameProj, pattern = "\\.RData$")){
   break
 }
 
+cat("Loading data complete\n\n")
+proc.time() - start40
 
 
 
 
-
-#get the string values for the random vectors 
-numsAndNames <- ExtractRVnumsAndNames(RP_names = names(projection))
-
-#split the returned list into two seperate variables.  Convert to matricies for use in the next step
-RV_nums <- as.matrix(numsAndNames$nums)
-RV_names <- as.matrix(numsAndNames$names)
-
+## Extract string values for the random vectors ####
+cat("Extracting string values for the random vectors\n")
+proc.time() - start40
+# check if already complete and saved
+fileExistCheck <- FileExistCheck_workingDir(filename = "40_RVnumsAndNames.RData", subDir = "output")
+if(fileExistCheck != FALSE){
+  load(fileExistCheck)
+}else{
+  
+  #get the string values for the random vectors 
+  numsAndNames <- ExtractRVnumsAndNames(RP_names = names(projection))
+  
+  #split the returned list into two separate variables.  Convert to matrices for use in the next step
+  RV_nums <- as.matrix(numsAndNames$nums)
+  RV_names <- as.matrix(numsAndNames$names)
+  
+  #save String extraction to a RData file
+  save(numsAndNames, file = file.path("output", "40_RVnumsAndNames.RData"),
+       precheck = TRUE, compress = TRUE)
+}
+cat("String extraction complete\n\n")
+proc.time() - start40
 
 
 ## Sort all of the projection columns ####
-
-#duplicate the projection data frame to store results of sorted projections
-projectionSort <- projection
-#replace the row names with an assending integer 
-#   (after sorting, the rows will no longer refer to a single user's projection)
-rownames(projectionSort) <- c(1:nrow(projectionSort))
-
-#sort each column 
-for(i in 1:ncol(projection))
-{
-  projectionSort[,i] <- projection[order(projection[i]),i]
+cat("Sorting projection columns\n")
+# check if the projections have already been sorted and saved
+fileExistCheck <- FileExistCheck_workingDir(filename = "40_projectionSort.RData", subDir = "output")
+if(fileExistCheck != FALSE){
+  load(fileExistCheck)
+}else{
+  #duplicate the projection data frame to store results of sorted projections
+  projectionSort <- projection
+  #replace the row names with an ascending integer 
+  #   (after sorting, the rows will no longer refer to a single user's projection)
+  rownames(projectionSort) <- c(1:nrow(projectionSort))
+  
+  #sort each column 
+  for(i in 1:ncol(projection))
+  {
+    projectionSort[,i] <- projection[order(projection[i]),i]
+    
+    
+    #| print completion progress to console   ####
+    #during first iteration, create progress status variables for main processing loop
+    if(i==1){
+      iCount <- 0 #loop counter for completion updates
+      pct <- 0  #percentage complete tracker
+    }
+    #print function
+    updateVars <- DisplayPercentComplete(projectionSort, iCount, pct, displayText = "Sorting projections: ")
+    #update status variables
+    iCount <- updateVars$iCount
+    pct <- updateVars$pct
+    #print update
+    cat(updateVars$toPrint)
+  }
+  
+  #save sorted projections to a RData file
+  save(projectionSort, file = file.path("output", "40_projectionSort.RData"),
+       precheck = TRUE, compress = TRUE)
 }
+cat("Sorting projection columns complete\n\n")
+proc.time() - start40
+
+
 
 ## Test each projection value as the threshold to find best threshold value (minimizing withinSS, W) ####
+cat("Finding best threshold value for each projection (minimizing withinSS, W)")
 #create empty data frame to store results of matrix multiplication
 minW_RandVec <- data.frame(matrix(nrow = 2, ncol = length(projection)))
 #set names
@@ -162,6 +216,8 @@ colnames(minW_RandVec) <- minW_RandVecColNames
 # set row names
 rownames(minW_RandVec) <- c("Min WithinSS (W)", "Group Threshold")
 
+
+## loop through all the projections
 for(i in 1:ncol(projectionSort))
 {
   #build current column name
@@ -170,6 +226,23 @@ for(i in 1:ncol(projectionSort))
   #reset the minimimum withinSS value to an abserdly large value
   minW <- 1e10
   
+  
+  #| print completion progress to console   ####
+  #durring first iteration, create progress status variables for main processing loop
+  if(i==1){
+    iCount <- 0 #loop counter for completion updates
+    pct <- 0  #percentage complete tracker
+  }
+  #print function
+  updateVars <- DisplayPercentComplete(projectionSort, iCount, pct, displayText = "Locating best threshold values: ")
+  #update status variables
+  iCount <- updateVars$iCount
+  pct <- updateVars$pct
+  #print update
+  cat(updateVars$toPrint)
+  
+  
+  ## brute-force search for the global minimum
   for(j in 1:nrow(projectionSort))
   {
     #test each of the projection values (x_j) as the threshold 
@@ -207,25 +280,16 @@ for(i in 1:ncol(projectionSort))
   minW_RandVec["Group 1 Count", curColName] <- sum(projectionSort[,curColName] < as.numeric(bestThresh))
   minW_RandVec["Group 2 Count", curColName] <- sum(projectionSort[,curColName] >= as.numeric(bestThresh))
   
-  
-  
-  #| print completion progress to console   ####
-  #durring first iteration, create progress status variables for main processing loop
-  if(i==1)
-  {
-    iCount <- 0 #loop counter for completion updates
-    pct <- 0  #percentage complete tracker
+  if (i %% 250==0) {
+    #write to a RData file
+    save(minW_RandVec, file = file.path("output", paste0("40_minW_and_threshold-",i,".RData")),
+         precheck = TRUE, compress = TRUE)
+    cat("\nSaving 250 file")
+    proc.time() - start40
+    
   }
   
-  #print function
-  updateVars <- DisplayPercentComplete(projectionSort, iCount, pct, displayText = "Locating best threshold values: ")
-  
-  #update status variables
-  iCount <- updateVars$iCount
-  pct <- updateVars$pct
-  
-  #print update
-  cat(updateVars$toPrint)
+
 }
 
 #transpose and sort the min. withinSS and group threshold data
@@ -236,10 +300,12 @@ minW_RandVec_sort <- minW_RandVec_sort[order(minW_RandVec_sort$`Min WithinSS (W)
 ## |Save min. withinSS and group threshold data to file ####
 #write a CSV file
 cat("\nSaving CSV file.")
-write.csv(file = file.path("output", "40_minW_and_threshold.csv"), 
+proc.time() - start40
+
+write.csv(file = file.path("output", "40_minW_and_threshold_sorted.csv"), 
           x = minW_RandVec_sort)  
 #write to a RData file
-save(minW_RandVec_sort, file = file.path("output", "40_minW_and_threshold.RData"),
+save(minW_RandVec_sort, file = file.path("output", "40_minW_and_threshold_sorted.RData"),
      precheck = TRUE, compress = TRUE)
 
 
@@ -251,8 +317,10 @@ clusterWThreshold <- 0.36
 clusterCandidates <- minW_RandVec[1,minW_RandVec["Min WithinSS (W)",] < clusterWThreshold]
 sortedCandidates <- clusterCandidates[1,order(clusterCandidates)]
 
+
 #report percentage of promising projections 
-length(clusterCandidates)/length(minW_RandVec)
+cat("percentage of promising projections:", length(clusterCandidates)/length(minW_RandVec))
+
 
 #save the names of the cluster candidates
 sortedCandidateNames <- names(sortedCandidates)
@@ -260,9 +328,12 @@ sortedCandidateNames <- names(sortedCandidates)
 ##|Save data to file ####
 #write to a CSV file
 cat("\nSaving files.")
-write.csv(file = file.path("output", "40_best_RP_names.csv"), 
+write.csv(file = file.path("output", 
+                           paste0("40_best_RP_names (W-lt-", clusterWThreshold, ").csv")), 
           x = sortedCandidateNames)  
 #write to a RData file
-save(sortedCandidateNames, file = file.path("output", "40_best_RP_names.RData"),
+save(sortedCandidateNames, 
+     file = file.path("output", 
+                      paste0("40_best_RP_names (W-lt-", clusterWThreshold, ").RData")),
      precheck = TRUE, compress = TRUE)
 
