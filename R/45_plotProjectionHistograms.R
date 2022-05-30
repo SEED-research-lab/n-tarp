@@ -24,7 +24,7 @@
 # 
 # Description:  
 # 
-# Package dependancies: 
+# Package dependencies: 
 #
 # Changelog:
 #     2019.09.19. forked from other SEED lab projects

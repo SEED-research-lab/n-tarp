@@ -1,5 +1,5 @@
 ## ===================================================== ##
-# Title:        Find best treshold values for n-TARP method ####
+# Title:        Find best threshold values for n-TARP method ####
 # Project:      n-TARP clustering
 #               https://github.com/SEED-research-lab/n-tarp
 # 
@@ -24,13 +24,13 @@
 # 
 # Description:  
 # 
-# Package dependancies: 
+# Package dependencies: 
 #
 # Changelog:
 #     2019.09.19. forked from other SEED lab projects
 #                   
 # Feature wishlist:  (*: planned but not complete)
-#     *look for a more efficent/smarter way to identify than through an exaustive search
+#     *look for a more efficient/smarter way to identify than through an exhaustive search
 ## ===================================================== ##
 
 

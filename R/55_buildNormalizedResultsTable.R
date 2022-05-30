@@ -24,7 +24,7 @@
 # 
 # Description:  
 # 
-# Package dependancies: readr, tidyr, stringr, writexl
+# Package dependencies: readr, tidyr, stringr, writexl
 #
 # Changelog:
 #     2019.09.19. forked from other SEED lab projects
@@ -43,6 +43,7 @@ rm(list=setdiff(ls(), varsToRetain))
 require("readr")
 require("tcltk")
 require("stringr")
+require("writexl")
 
 
 ##Read data from files ####
@@ -153,7 +154,7 @@ for (curFileNum in 1:length(probMatrixfileNames)) {
   for(i in 1:length(questionCodes))  
   {
     #loop through the possible responses 
-    #   (Note, this only works when the questions from the outer loop have the same respones)
+    #   (Note, this only works when the questions from the outer loop have the same response)
     for(j in 1:length(responseOptions$response))
     {
       #build the column name to read from the probability matrix for the current response and code pair
